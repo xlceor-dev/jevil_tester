@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { runSteps } from 'passmark';
 import { setMode } from '../simulator/client';
+import { recordMetric } from '../simulator/metrics';
+import { getMode } from '../simulator/client';
 
 test.beforeAll(async () => await setMode('normal'));
 
 test('Login and view sensor dashboard', async ({ page }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(240_000); // 4 minutos
   await runSteps({
     page, userFlow: 'Authenticated dashboard access',
 

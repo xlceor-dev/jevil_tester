@@ -3,11 +3,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { configure } from "passmark";
 
-configure({
-  ai: {
-    mode: 'cua',
-  }
-});
+
 
 // dotenv.config({ path: path.resolve(__dirname, ".env") });
 
@@ -15,9 +11,15 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // configure({
 //   ai: {
-//     gateway: "openrouter"
+//     mode: 'cua',
 //   }
 // });
+
+configure({
+  ai: {
+    gateway: "openrouter"
+  }
+});
 
 
 /**
