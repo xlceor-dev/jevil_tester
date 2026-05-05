@@ -9,7 +9,17 @@ configure({
   }
 });
 
+// dotenv.config({ path: path.resolve(__dirname, ".env") });
+
 dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+// configure({
+//   ai: {
+//     gateway: "openrouter"
+//   }
+// });
+
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv

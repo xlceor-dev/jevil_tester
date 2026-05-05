@@ -10,6 +10,9 @@ test('Jevil wildChaosDance — NaN values do not crash the UI', async ({ page })
     page, userFlow: 'Corrupt sensor resilience',
     steps: [
       { description: 'Navigate to http://localhost:3000' },
+      { description: 'Fill username', data: { value: 'admin' } },
+      { description: 'Fill password', data: { value: '123456' } },
+      { description: 'Click the login button', waitUntil: 'Dashboard is visible' },
       { description: 'Wait 3 seconds for sensor data to arrive' },
     ],
     assertions: [
@@ -28,7 +31,10 @@ test('Jevil wildChaosDance — XSS payload in telemetry is not executed', async 
     page, userFlow: 'XSS via hardware telemetry',
     steps: [
       { description: 'Navigate to http://localhost:3000' },
-      { description: 'Wait for sensor panel to render' },
+      { description: 'Fill username', data: { value: 'admin' } },
+      { description: 'Fill password', data: { value: '123456' } },
+      { description: 'Click the login button', waitUntil: 'Dashboard is visible' },
+      { description: 'Wait 3 seconds for sensor data to arrive' },
     ],
     assertions: [
       { assertion: 'No alert dialog has appeared on the page' },
