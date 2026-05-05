@@ -1,0 +1,39 @@
+import { test, expect } from '@playwright/test';
+import { runSteps } from 'passmark';
+import { setMode } from '../simulator/client';
+
+test.beforeAll(async () => setMode('wildChaosDance'));
+
+test('Jevil wildChaosDance — NaN values do not crash the UI', async ({ page }) => {
+  test.setTimeout(120_000);
+  await runSteps({
+    page, userFlow: 'Corrupt sensor resilience',
+    steps: [
+      { description: 'Navigate to http://localhost:3000' },
+      { description: 'Wait 3 seconds for sensor data to arrive' },
+    ],
+    assertions: [
+      { assertion: 'The dashboard is still visible and not blank' },
+      { assertion: 'No JavaScript error overlay is displayed' },
+      { assertion: 'Sensor cards show a fallback like — or N/A instead of raw NaN' },
+      { assertion: 'The sparkline chart does not disappear or show broken rendering' },
+    ],
+    test, expect,
+  });
+});
+
+test('Jevil wildChaosDance — XSS payload in telemetry is not executed', async ({ page }) => {
+  test.setTimeout(120_000);
+  await runSteps({
+    page, userFlow: 'XSS via hardware telemetry',
+    steps: [
+      { description: 'Navigate to http://localhost:3000' },
+      { description: 'Wait for sensor panel to render' },
+    ],
+    assertions: [
+      { assertion: 'No alert dialog has appeared on the page' },
+      { assertion: 'No script tag content is visible in the sensor cards' },
+    ],
+    test, expect,
+  });
+});
