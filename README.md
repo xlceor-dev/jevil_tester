@@ -1,4 +1,6 @@
-<img width="850" height="300" alt="ascii-art-image (1)" src="https://github.com/user-attachments/assets/7b659654-2374-4737-82dd-b906a1defe72" />
+
+
+<img width="1440" height="875" alt="Captura de pantalla 2026-05-06 a la(s) 3 21 25 p m" src="https://github.com/user-attachments/assets/20af33b8-c575-4cd9-a5a3-1a2c0f5fc135" />
 
 
 # Jevil — Chaos Testing for IoT Apps
