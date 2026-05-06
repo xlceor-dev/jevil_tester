@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { runSteps } from 'passmark';
 import { setMode } from '../simulator/client';
-import { recordMetric } from '../simulator/metrics';
+import { postMetric } from '../simulator/client';
 import { getMode } from '../simulator/client';
 
 test.beforeAll(async () => setMode('wildChaosDance'));
@@ -35,7 +35,7 @@ test('Jevil wildChaosDance — NaN values do not crash the UI', async ({ page })
   } finally {
     const latency = Date.now() - start;
 
-    recordMetric({
+    await postMetric({
       test: test.info().title,
       mode: await getMode(),
       success,
@@ -75,7 +75,7 @@ test('Jevil wildChaosDance — XSS payload in telemetry is not executed', async 
   } finally {
     const latency = Date.now() - start;
 
-    recordMetric({
+    await postMetric({
       test: test.info().title,
       mode: await getMode(),
       success,

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { runSteps } from 'passmark';
 import { setMode } from '../simulator/client';
-import { recordMetric } from '../simulator/metrics';
+import { postMetric } from '../simulator/client';
 import { getMode } from '../simulator/client';
 
 test.beforeAll(async () => await setMode('normal'));
@@ -33,7 +33,7 @@ test('Login and view sensor dashboard', async ({ page }) => {
   } finally {
     const latency = Date.now() - start;
   
-    recordMetric({
+    await postMetric({
       test: test.info().title,
       mode: await getMode(),
       success,

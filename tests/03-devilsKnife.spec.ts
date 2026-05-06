@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { runSteps } from 'passmark';
 import { setMode } from '../simulator/client';
-import { recordMetric } from '../simulator/metrics';
+import { postMetric } from '../simulator/client';
 import { getMode } from '../simulator/client';
 
 test.beforeAll(async () => setMode('devilsKnife'));
@@ -18,6 +18,7 @@ test("Jevil devilsKnife — dashboard shows disconnected state", async ({ page }
         { description: 'Navigate to http://localhost:3000' },
         { description: 'Fill username', data: { value: 'admin' } },
         { description: 'Fill password', data: { value: '123456' } },
+        { description: 'Click the login button', waitUntil: 'Dashboard is visible' },
         { description: 'Wait 5 seconds for the SSE connection to drop' },
         ],
         assertions: [
@@ -32,7 +33,7 @@ test("Jevil devilsKnife — dashboard shows disconnected state", async ({ page }
         throw e;
     } finally {
         const latency = Date.now() - start;
-        recordMetric({
+        await postMetric({
         test: test.info().title,
         mode: await getMode(),
         success,

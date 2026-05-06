@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { runSteps } from 'passmark';
 import { setMode } from '../simulator/client';
-import { recordMetric } from '../simulator/metrics';
+import { postMetric } from '../simulator/client';
 import { getMode } from '../simulator/client';
 
 test.beforeAll(async () => setMode('pipOrgan'));
@@ -31,7 +31,7 @@ test("Jevil pipOrgan — dashboard warns when data is stale", async ({ page }) =
     throw e;
   } finally {
     const latency = Date.now() - start;
-    recordMetric({
+    await postMetric({
       test: test.info().title,
       mode: await getMode(),
       success,
