@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { getModeHandler, setMode, getCurrentMode } from './modes';
+import { exportMetricsReport } from './metrics';
 
 console.log(">>> INICIANDO SERVER...");
 
@@ -9,8 +10,10 @@ app.use(cors());
 app.use(express.json());
 
 // Control de Jevil (solo para tests)
-app.post('/jevil/mode', (req, res) => {
+app.post('/mode', (req, res) => {
   setMode(req.body.mode);
+  const handler = getModeHandler();
+  res.write(`event: mode\ndata: ${JSON.stringify({ mode: req.body.mode })}\n\n`);
   console.log(`\n[Jevil] ✦ Mode → ${req.body.mode} ✦\n`);
   res.json({ mode: getCurrentMode(), message: "CHAOS CHAOS CHAOS" });
 });
@@ -28,18 +31,20 @@ app.get('/events', (req, res) => {
 
   res.write(`id:${Date.now()}\nevent:status\ndata:connected\n\n`);
 
-  const handler = getModeHandler();
-
   const telInterval = setInterval(() => {
     if (res.destroyed) return;
+    const handler = getModeHandler();
     const data = handler.telemetry();
     if (data !== null) send('telemetry', data);
-  }, handler.telemetryInterval ?? 500);
+  }, 500);
 
   const stateInterval = setInterval(() => {
     if (res.destroyed) return;
+    const handler = getModeHandler();
     send('state', handler.state());
   }, 200);
+
+  send('mode', { mode: getCurrentMode() });
 
   req.on('close', () => { clearInterval(telInterval); clearInterval(stateInterval); });
 
@@ -50,6 +55,7 @@ app.get('/events', (req, res) => {
 app.post('/servo', (req, res) => getModeHandler().onCommand(req, res));
 app.post('/led',   (req, res) => getModeHandler().onCommand(req, res));
 app.get('/ping',   (req, res) => getModeHandler().onPing(req, res));
+app.get('/metrics', (_req, res) => { res.json(exportMetricsReport());});
 app.get('/demo',   (_req, res) => res.send('demo ok'));
 
 app.listen(8080, () => console.log('[Jevil] "I can do ANYTHING!" → http://localhost:8080'));
