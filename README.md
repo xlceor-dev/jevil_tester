@@ -9,7 +9,7 @@
 
 **Spoiler: it didn't.**
 
-→ **[Read the full writeup](https://osorio.hashnode.dev/jevil-tester-building-a-chaos-testing-tool-for-iot-apps-and-for-braking-my-own-esp32-dashboard-after-the-project-itself)** — XSS via sensor data, AI-driven brute-force, silent hardware failures, and what it means for any IoT dashboard in production.
+→ **[Read the full writeup](https://osorio.hashnode.dev/jevil-tester)** — XSS via sensor data, AI-driven brute-force, silent hardware failures, and what it means for any IoT dashboard in production.
 
 ---
 
@@ -148,7 +148,7 @@ The simulator exposes the same SSE + HTTP interface as a real ESP32. As long as 
 npx playwright test 02_wildChaosDance
 ```
 
-Watch Passmark confirm an `alert` element in the accessibility tree — triggered not by a web request, but by a temperature sensor value that contained a `<script>` tag. The full explanation of how the payload travels from simulator to DOM is in the [writeup](https://osorio.hashnode.dev/jevil-tester-building-a-chaos-testing-tool-for-iot-apps-and-for-braking-my-own-esp32-dashboard-after-the-project-itself).
+Watch Passmark confirm an `alert` element in the accessibility tree — triggered not by a web request, but by a temperature sensor value that contained a `<script>` tag. The full explanation of how the payload travels from simulator to DOM is in the [writeup](https://osorio.hashnode.dev/jevil-tester).
 
 ### Reproduce the brute-force finding
 
@@ -217,7 +217,7 @@ NEXT_PUBLIC_ESP32_URL=http://localhost:8080
 
 [Hashnode × Passmark "Breaking Apps" Hackathon](https://hashnode.com/hackathons/breaking-things) · May 2026
 
-→ [Read the full writeup](https://osorio.hashnode.dev/jevil-tester-building-a-chaos-testing-tool-for-iot-apps-and-for-braking-my-own-esp32-dashboard-after-the-project-itself) — the complete story of what broke, why, and what it means for IoT dashboards in production.
+→ [Read the full writeup](https://osorio.hashnode.dev/jevil-tester) — the complete story of what broke, why, and what it means for IoT dashboards in production.
 
 ---
 
