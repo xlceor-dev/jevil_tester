@@ -1,9 +1,7 @@
 
+<img width="1440" height="875" alt="Khymera dashboard under Wild Chaos Dance mode — TELEMETRY CORRUPTED · DATA INTEGRITY FAILED, NaN temperatures, -999V readings, Passmark logs firing in the terminal" src="https://github.com/user-attachments/assets/20af33b8-c575-4cd9-a5a3-1a2c0f5fc135" />
 
-<img width="1440" height="875" alt="Captura de pantalla 2026-05-06 a la(s) 3 21 25 p m" src="https://github.com/user-attachments/assets/20af33b8-c575-4cd9-a5a3-1a2c0f5fc135" />
-
-
-# Jevil — Chaos Testing for IoT Apps
+# Jevil — Chaos Testing for IoT Dashboards
 
 > *"I can do ANYTHING"* — and so can broken hardware.
 
@@ -11,38 +9,47 @@
 
 **Spoiler: it didn't.**
 
+→ **[Read the full writeup](https://osorio.hashnode.dev/jevil-tester-building-a-chaos-testing-tool-for-iot-apps-and-for-braking-my-own-esp32-dashboard-after-the-project-itself)** — XSS via sensor data, AI-driven brute-force, silent hardware failures, and what it means for any IoT dashboard in production.
+
 ---
 
-<!-- VIDEO: replace with your actual demo -->
-> 📹 **[Watch the demo](https://your-video-link)** — dashboard modes switching in real time as Jevil runs chaos tests
+## Watch it happen
+
+[![Jevil demo — Wild Chaos Dance mode, Passmark catching failures in real time](https://img.youtube.com/vi/gA1-vydaVdw/maxresdefault.jpg)](https://www.youtube.com/watch?v=gA1-vydaVdw)
+
+*The Khymera dashboard under `wildChaosDance` mode. Every sensor value is adversarial. Passmark is running in the terminal, confirming the UI behavior in real time. The World Revolving plays for a reason.*
 
 ---
 
 ## What Jevil found
 
-Running 9 tests across 6 chaos modes against the [Khymera Dashboard](./dashboard), Jevil uncovered the following:
+Running 9 tests across 6 chaos modes against the Khymera Dashboard:
 
-| # | Finding | Severity | Triggered by | Evidence |
-|---|---------|----------|--------------|---------|
-| 1 | **XSS execution via sensor telemetry** | 🔴 Critical | `wildChaosDance` | AI detected live `alert` element in accessibility tree |
-| 2 | **No brute force protection on login** | 🟠 High | `clubAttack` | 6 password attempts, zero lockouts, zero delays |
-| 3 | **Silent command failure during disconnect** | 🟠 High | `devilsKnife` | Dashboard showed "CONNECTED" while commands dropped |
-| 4 | **Stale data presented as live telemetry** | 🟡 Medium | `pipOrgan` | Jan 2025 data, 4ms latency, no warning shown |
-| 5 | **No pending state on slow commands** | 🟢 Low | `pacifyingKnife` | Enviar button unchanged during 20s response delay |
-| 6 | **No loading indicator on delayed telemetry** | 🟢 Low | `pacifyingKnife` | Old values shown with no staleness indication |
+| # | Finding | Severity | Triggered by |
+|---|---------|----------|--------------|
+| 1 | **XSS execution via sensor telemetry** | 🔴 Critical | `wildChaosDance` |
+| 2 | **No brute-force protection on login** | 🟠 High | `clubAttack` |
+| 3 | **Silent command failure during disconnect** | 🟠 High | `devilsKnife` |
+| 4 | **Stale data presented as live telemetry** | 🟡 Medium | `pipOrgan` |
+| 5 | **No pending state on slow commands** | 🟢 Low | `pacifyingKnife` |
+| 6 | **No loading indicator on delayed telemetry** | 🟢 Low | `pacifyingKnife` |
 
-**Test results: 1 passed · 8 failed · 0 flaky**
-The one that passed is the happy path — proving the failures are real bugs, not false positives.
+**Test results: 1 passed · 8 failed · 0 flaky.**
+The single passing test is the happy path — which is what makes the 8 failures meaningful. They're real bugs, not noise.
 
-→ Full details in [FINDINGS.md](./FINDINGS.md)
+→ Full details and fixes in [FINDINGS.md](./FINDINGS.md)
 
 ---
 
 ## The problem Jevil solves
 
-Web apps get tested constantly. IoT dashboards almost never do — because their failure modes live in the hardware, not the software. Nobody tests *"what happens to my dashboard when the ESP32 lies to it?"*
+Web apps get tested constantly. IoT dashboards almost never do — because their failure modes live in the hardware, not the software.
 
-Jevil answers that question. It speaks the same protocol as a real ESP32 (SSE telemetry, HTTP commands, ping latency) but injects adversarial behavior at the hardware layer. Passmark drives the browser and evaluates the results in natural language, making it possible to test states that are impossible to cover with traditional selectors.
+Nobody asks *"what happens to my dashboard when the ESP32 lies to it?"* — not because the answer doesn't matter, but because there was no practical way to find out. You can mock an API. You can't easily mock a physical sensor sending adversarial data over WiFi.
+
+Jevil answers that question. It speaks the same protocol as a real ESP32 (SSE telemetry, HTTP commands, ping latency) but injects adversarial behavior at the hardware layer. Passmark drives the browser and evaluates the results in natural language, making it possible to test states that are impossible to cover with traditional CSS selectors.
+
+**Jevil is not specific to Khymera.** Change one environment variable to point it at any SSE-based IoT dashboard. The simulator is hardware-agnostic — it doesn't know or care what device is on the other end. If your dashboard consumes `/events` over SSE and accepts commands over HTTP POST, Jevil can break it.
 
 ---
 
@@ -64,17 +71,17 @@ Jevil answers that question. It speaks the same protocol as a real ESP32 (SSE te
 ┌─────────────────────────────────────────────────────┐
 │              Jevil Simulator (Express)              │
 │                                                     │
-│  GET /events  ─ Server-Sent Events (telemetry)     │
-│  POST /servo  ─ Actuator commands                  │
-│  GET /ping    ─ Latency check                      │
-│  POST /jevil/mode ─ Switch chaos mode (test only)  │
+│  GET /events      — Server-Sent Events (telemetry) │
+│  POST /servo      — Actuator commands              │
+│  GET /ping        — Latency check                  │
+│  POST /jevil/mode — Switch chaos mode (test only)  │
 └─────────────────────────────────────────────────────┘
 ```
 
-A single environment variable points the dashboard at the simulator instead of the real device:
+One environment variable swaps the real ESP32 for the simulator — the dashboard never knows the difference:
 
 ```bash
-NEXT_PUBLIC_ESP32_URL=http://localhost:8080   # simulator
+NEXT_PUBLIC_ESP32_URL=http://localhost:8080   # Jevil simulator
 NEXT_PUBLIC_ESP32_URL=http://192.168.4.1     # real ESP32
 ```
 
@@ -82,15 +89,15 @@ NEXT_PUBLIC_ESP32_URL=http://192.168.4.1     # real ESP32
 
 ## The 6 chaos modes
 
-Each mode is named after a Jevil attack from Deltarune. Each replicates a real-world failure scenario.
+Each mode is named after a Jevil attack from Deltarune. Each replicates a real-world hardware failure scenario.
 
-| Mode | Named after | What it does | Real-world equivalent |
-|------|-------------|--------------|----------------------|
+| Mode | Named after | What it simulates | Real-world equivalent |
+|------|-------------|-------------------|-----------------------|
 | `normal` | — | Faithful ESP32 replica | Baseline |
-| `wildChaosDance` | Wild Chaos Dance | NaN, null, extreme values, XSS strings as sensor data | Compromised or malfunctioning sensor |
-| `devilsKnife` | Devil's Knife | Abrupt disconnections, 503 errors, destroyed HTTP responses | WiFi dropout, power flicker |
+| `wildChaosDance` | Wild Chaos Dance | NaN, null, extreme values, XSS strings as sensor readings | Compromised or malfunctioning sensor |
+| `devilsKnife` | Devil's Knife | Abrupt disconnections, 503 errors, destroyed TCP connections | WiFi dropout, power flicker |
 | `pacifyingKnife` | Pacifying Knife | 10–20s response delays, 8s telemetry intervals | Network congestion, busy device |
-| `pipOrgan` | Pipe Organ | Identical payload on every tick, timestamp frozen at 2025-01-01 | Sensor stuck in a loop, stale cache |
+| `pipOrgan` | Pipe Organ | Identical payload every tick, timestamp frozen at 2025-01-01 | Sensor stuck in a loop, stale cache |
 | `cARdS` | cARdS | Telemetry at 20 events/second instead of 2 | Runaway firmware, buffer overflow |
 
 ---
@@ -102,48 +109,70 @@ Each mode is named after a Jevil attack from Deltarune. Each replicates a real-w
 git clone https://github.com/xlceor-dev/jevil_tester
 cd jevil && npm install
 
-# 2. Configure API keys
+# 2. Configure
 cp .env.example .env
-# Add your OPENROUTER_API_KEY (free tier works)
+# Add your OPENROUTER_API_KEY — free tier works
 
-# 3. Start simulator + dashboard + tests
+# 3. Start everything
 npm run simulator        # terminal 1 — Jevil on :8080
 npm run dev              # terminal 2 — dashboard on :3000
-npx playwright test      # terminal 3 — run the chaos suite
+npx playwright test      # terminal 3 — run the full chaos suite
 ```
 
 View results:
 
 ```bash
-npx playwright show-report    # Passmark test report
+npx playwright show-report         # Passmark HTML test report
 open http://localhost:3000/report  # live chaos metrics dashboard
 ```
 
----
-
-## Test the brute force finding yourself
+### Point Jevil at your own dashboard
 
 ```bash
-npx playwright test 06-clubAttack
+# In your dashboard's .env
+NEXT_PUBLIC_ESP32_URL=http://localhost:8080
+
+# Run only the chaos modes relevant to your stack
+npx playwright test 02_wildChaosDance   # data corruption + XSS
+npx playwright test 03_devilsKnife      # disconnection handling
+npx playwright test 05_pipOrgan         # stale data detection
 ```
 
-Watch the test attempt `wrongpassword1` through `wrongpassword5` with no lockout, no delay, and no CAPTCHA. The login accepts unlimited attempts. For a dashboard controlling physical hardware, that's not a UX issue — it's a safety one.
+The simulator exposes the same SSE + HTTP interface as a real ESP32. As long as your dashboard reads telemetry from `/events` and sends commands via HTTP POST, Jevil will work against it with zero changes to your app.
+
+---
+
+## Reproduce the most severe finding in 2 minutes
+
+```bash
+npx playwright test 02_wildChaosDance
+```
+
+Watch Passmark confirm an `alert` element in the accessibility tree — triggered not by a web request, but by a temperature sensor value that contained a `<script>` tag. The full explanation of how the payload travels from simulator to DOM is in the [writeup](https://osorio.hashnode.dev/jevil-tester-building-a-chaos-testing-tool-for-iot-apps-and-for-braking-my-own-esp32-dashboard-after-the-project-itself).
+
+### Reproduce the brute-force finding
+
+```bash
+npx playwright test 06_clubAttack
+```
+
+Watch the test attempt six different passwords with zero lockout, zero delay, and zero CAPTCHA. The login endpoint accepts unlimited attempts. For a dashboard that controls physical hardware, that's not a UX issue — it's a safety one.
 
 ---
 
 ## The dashboard reacts to chaos
 
-The Khymera Dashboard isn't just a test target — it actively detects which chaos mode is running and adapts its visual state in real time.
+The Khymera Dashboard doesn't just fail under adversarial input — it detects which chaos mode is active and adapts its visual state in real time.
 
 | Mode | Dashboard behavior |
 |------|--------------------|
 | `wildChaosDance` | CRT scanlines, RGB glitch text, terminal font, green-on-black palette |
 | `devilsKnife` | Blood drip overlays, red vignette, heartbeat pulse on disconnected indicator |
-| `pacifyingKnife` | Deep ocean bg, slow breathing animation, pressure ring overlays |
+| `pacifyingKnife` | Deep ocean background, slow breathing animation, pressure ring overlays |
 | `pipOrgan` | Amber CRT filter, "FROZEN" watermark, phosphor scanline |
-| `cARdS` | Rainbow border cycling, hue-rotate spin, event/sec counter |
+| `cARdS` | Rainbow border cycling, hue-rotate spin, live event/sec counter |
 
-When the mode changes, a fullscreen announcer animates in with the mode name, icon, and tagline — then fades out.
+When a mode switch occurs, a fullscreen announcer animates in with the mode name, icon, and tagline — then fades out. You can see all of this in the [demo video](https://www.youtube.com/watch?v=gA1-vydaVdw).
 
 ---
 
@@ -152,9 +181,9 @@ When the mode changes, a fullscreen announcer animates in with the mode name, ic
 ```
 jevil/
 ├── simulator/
-│   ├── server.ts       ← Express server, exact ESP32 API replica
-│   ├── modes.ts        ← 6 chaos mode handlers
-│   └── client.ts       ← Helper for switching modes from tests
+│   ├── server.ts            ← Express server, exact ESP32 API replica
+│   ├── modes.ts             ← 6 chaos mode handlers
+│   └── client.ts            ← Helper for switching modes from inside tests
 ├── tests/
 │   ├── 01_happy_path.spec.ts
 │   ├── 02_wildChaosDance.spec.ts
@@ -162,11 +191,11 @@ jevil/
 │   ├── 04_pacifyingKnife.spec.ts
 │   ├── 05_pipOrgan.spec.ts
 │   └── 06_clubAttack.spec.ts
-├── dashboard/          ← Next.js app (the chaos target)
+├── dashboard/               ← Next.js app (the chaos target)
 │   └── app/
-│       ├── dashboard/page.tsx   ← Main dashboard + mode theming
+│       ├── dashboard/page.tsx   ← Main dashboard + real-time mode theming
 │       └── report/page.tsx      ← Live findings report
-├── FINDINGS.md         ← Full security findings document
+├── FINDINGS.md              ← Full security findings with root causes and fixes
 └── playwright.config.ts
 ```
 
@@ -175,10 +204,10 @@ jevil/
 ## Environment variables
 
 ```bash
-# Required — one key routes to both Claude and Gemini via OpenRouter
+# Required — routes to Claude and Gemini via OpenRouter
 OPENROUTER_API_KEY=sk-or-v1-...
 
-# Dashboard target (simulator or real device)
+# Dashboard target — swap between simulator and real device
 NEXT_PUBLIC_ESP32_URL=http://localhost:8080
 ```
 
@@ -186,9 +215,9 @@ NEXT_PUBLIC_ESP32_URL=http://localhost:8080
 
 ## Built for
 
-[Hashnode × Passmark "Breaking Apps" Hackathon](https://hashnode.com/hackathons/breaking-things) · May 2025
+[Hashnode × Passmark "Breaking Apps" Hackathon](https://hashnode.com/hackathons/breaking-things) · May 2026
 
-→ [Read the full writeup on Hashnode](https://osorio.hashnode.dev/jevil-tester-building-a-chaos-testing-tool-for-iot-apps-and-for-braking-my-own-esp32-dashboard-after-the-project-itself)
+→ [Read the full writeup](https://osorio.hashnode.dev/jevil-tester-building-a-chaos-testing-tool-for-iot-apps-and-for-braking-my-own-esp32-dashboard-after-the-project-itself) — the complete story of what broke, why, and what it means for IoT dashboards in production.
 
 ---
 
